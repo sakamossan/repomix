@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { program } from 'commander';
 import * as defaultAction from '../../src/cli/actions/defaultAction.js';
 import * as initAction from '../../src/cli/actions/initAction.js';
 import * as remoteAction from '../../src/cli/actions/remoteAction.js';
@@ -36,16 +37,6 @@ vi.mock('../../src/shared/logger', () => ({
   setLogLevelByEnv: vi.fn(),
 }));
 
-vi.mock('commander', () => ({
-  program: {
-    description: vi.fn().mockReturnThis(),
-    arguments: vi.fn().mockReturnThis(),
-    option: vi.fn().mockReturnThis(),
-    action: vi.fn().mockReturnThis(),
-    parseAsync: vi.fn().mockResolvedValue(undefined),
-  },
-}));
-
 vi.mock('../../src/cli/actions/defaultAction');
 vi.mock('../../src/cli/actions/initAction');
 vi.mock('../../src/cli/actions/remoteAction');
@@ -54,6 +45,17 @@ vi.mock('../../src/cli/actions/versionAction');
 describe('cliRun', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+
+    vi.mock('commander');
+    // @ts-expect-error
+    vi.mocked(program.description).mockReturnValue(program);
+    // @ts-expect-error
+    vi.mocked(program.optionsGroup).mockReturnValue(program);
+    vi.mocked(program.argument).mockReturnValue(program);
+    vi.mocked(program.option).mockReturnValue(program);
+    vi.mocked(program.addOption).mockReturnValue(program);
+    vi.mocked(program.action).mockReturnValue(program);
+    vi.mocked(program.configureOutput).mockReturnValue({ outputError: vi.fn() });
 
     vi.mocked(defaultAction.runDefaultAction).mockResolvedValue({
       config: {
@@ -165,6 +167,7 @@ describe('cliRun', () => {
 
   test('should run without arguments', async () => {
     await expect(run()).resolves.not.toThrow();
+    expect(logger.error).not.toHaveBeenCalled();
   });
 
   describe('executeAction', () => {
