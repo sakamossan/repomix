@@ -170,6 +170,15 @@ describe('cliRun', () => {
     expect(logger.error).not.toHaveBeenCalled();
   });
 
+  test('should call process.exit(1) on error', async () => {
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementationOnce(() => undefined as never);
+    const parseSpy = vi.mocked(program.parseAsync).mockImplementationOnce(() => { throw Error() });
+    await expect(run()).resolves.not.toThrow();
+    expect(exitSpy).toHaveBeenCalledWith(1)
+    exitSpy.mockReset();
+    parseSpy.mockReset();
+  });
+
   describe('executeAction', () => {
     test('should execute default action when no special options provided', async () => {
       await runCli(['.'], process.cwd(), {});
